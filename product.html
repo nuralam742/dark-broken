@@ -12,6 +12,7 @@
 <main class="wrap">
   <div class="crumb"><a href="index.html">Shop</a> / <span id="crumbName">Product</span></div>
   <div id="detail" class="detail"></div>
+  <div id="faqWrap" style="max-width:960px;margin:6px auto 0"></div>
   <div id="notfound" class="empty" style="display:none">এই প্রোডাক্টটি পাওয়া যায়নি। <a href="index.html">Shop-এ ফিরে যান</a></div>
 </main>
 <script src="assets/app.js"></script>
@@ -37,8 +38,12 @@ function drawDetail() {
   const p = prod;
   const hasVar = p.variants && p.variants.length;
   const st = stockTotal(p);
+  const imgs = allImages(p);
   $("#detail").innerHTML = `
-    <div class="imgbox">${productImg(p)}</div>
+    <div>
+      <div class="imgbox" id="galMain">${imgs.length ? `<img src="${esc(imgs[0])}" alt="${esc(p.name)}">` : productImg(p)}</div>
+      ${imgs.length > 1 ? `<div class="thumbs">${imgs.map((im, i) => `<img src="${esc(im)}" data-i="${i}" class="${i === 0 ? "on" : ""}" alt="">`).join("")}</div>` : ""}
+    </div>
     <div>
       ${p.category ? `<div class="cat">${esc(p.category)}</div>` : ""}
       <h1 style="font-size:28px;margin:6px 0">${esc(p.name)}</h1>
@@ -53,10 +58,20 @@ function drawDetail() {
       </div>
       <div class="panel" style="margin:22px 0 0;max-width:none;padding:16px 18px">
         <div class="kv"><span>স্টক</span><b>${st ? "আছে (" + st + "টি)" : "অর্ডার করা যাবে — ডেলিভারি কনফার্মে"}</b></div>
+        ${p.duration_days ? `<div class="kv"><span>মেয়াদ</span><b>${p.duration_days} দিন</b></div>` : ""}
         <div class="kv"><span>পেমেন্ট</span><b>bKash / Nagad / Rocket</b></div>
         <div class="kv" style="border-bottom:none"><span>ডেলিভারি</span><b>আপনার Dashboard-এ সরাসরি</b></div>
       </div>
     </div>`;
+  document.querySelectorAll(".thumbs img").forEach((t) => t.addEventListener("click", () => {
+    const im = imgs[Number(t.dataset.i)];
+    $("#galMain").innerHTML = `<img src="${esc(im)}" alt="${esc(p.name)}">`;
+    document.querySelectorAll(".thumbs img").forEach((x) => x.classList.toggle("on", x === t));
+  }));
+  if (p.faq && p.faq.length) {
+    $("#faqWrap").innerHTML = `<h2 class="section-title">সাধারণ প্রশ্ন ও উত্তর</h2>` + p.faq.map((f) => `
+      <details class="faq"><summary>${esc(f.q)}</summary><div class="fa">${esc(f.a)}</div></details>`).join("");
+  }
   const upd = () => {
     $("#priceBox").innerHTML = `${money(curPrice())}${curOld() ? `<s>${money(curOld())}</s>` : ""}${offPct(curPrice(), curOld()) ? `<span class="off">-${offPct(curPrice(), curOld())}% OFF</span>` : ""}`;
     $("#orderBtn").href = "order.html?id=" + p.id + (selVariant ? "&variant=" + selVariant.id : "");

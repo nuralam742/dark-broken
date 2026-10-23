@@ -31,10 +31,17 @@
   <div class="dash-tabs" style="max-width:860px;margin-left:auto;margin-right:auto">
     <button data-tab="orders" class="on" type="button">My Orders</button>
     <button data-tab="deliveries" type="button">My Deliveries</button>
+    <button data-tab="wishlist" type="button">Wishlist</button>
     <button data-tab="settings" type="button">Account Settings</button>
   </div>
 
-  <section class="panel wide" id="tab-orders"><h2>আমার অর্ডারসমূহ</h2><div id="ordersWrap"></div></section>
+  <section class="panel wide" id="tab-orders"><h2>আমার অর্ডারসমূহ</h2><div id="expiryWarn"></div><div id="ordersWrap"></div></section>
+
+  <section class="panel wide" id="tab-wishlist" style="display:none">
+    <h2>আমার Wishlist</h2>
+    <p class="sub">পছন্দ করে রাখা প্রোডাক্ট — পরে যেকোনো সময় কিনতে পারবেন।</p>
+    <div id="wishWrap" style="margin-top:14px"></div>
+  </section>
 
   <section class="panel wide" id="tab-deliveries" style="display:none">
     <h2>আমার ডেলিভারি (লাইসেন্স / লিংক)</h2>
@@ -47,9 +54,17 @@
     <form id="nameForm">
       <label>আপনার নাম</label>
       <input id="setName" required>
-      <button class="btn sm" style="margin-top:12px" type="submit">নাম সেভ করুন</button>
+      <label>ইমেইল (Login-এর জন্য)</label>
+      <input id="setEmail" type="email" placeholder="you@example.com">
+      <button class="btn sm" style="margin-top:12px" type="submit">সেভ করুন</button>
       <div class="msg" id="nameMsg"></div>
     </form>
+    <div style="margin-top:24px">
+      <h3 style="font-size:16px">অফার নোটিফিকেশন</h3>
+      <p class="sub" style="margin:6px 0 10px">চালু করলে নতুন অফার এলেই ব্রাউজারে নোটিফিকেশন পাবেন।</p>
+      <button class="btn sm ghost" id="pushBtn" type="button">🔔 Notification চালু করুন</button>
+      <div class="msg" id="pushMsg"></div>
+    </div>
     <form id="passForm" style="margin-top:22px">
       <h3 style="font-size:16px">পাসওয়ার্ড বদলান</h3>
       <label>বর্তমান পাসওয়ার্ড</label>
@@ -74,15 +89,41 @@ let ordersCache = [];
     $("#avatar").textContent = (me.user.name || "?").trim().charAt(0).toUpperCase();
     $("#pName").textContent = me.user.name;
     $("#setName").value = me.user.name;
-    $("#pMeta").textContent = "" + me.user.mobile + " · সদস্য: " + (me.user.created_at || "").slice(0, 10);
+    $("#pMeta").textContent = "" + me.user.mobile + (me.user.email ? " · " + me.user.email : "") + " · সদস্য: " + (me.user.created_at || "").slice(0, 10);
+    $("#setEmail").value = me.user.email || "";
   } catch (e) { store.del(TK); location.href = "login.html?next=dashboard.html"; return; }
   await loadOrders();
+  await loadWishlist();
 })();
 document.querySelectorAll(".dash-tabs button").forEach((b) => b.addEventListener("click", () => {
   document.querySelectorAll(".dash-tabs button").forEach((x) => x.classList.remove("on"));
   b.classList.add("on");
-  ["orders", "deliveries", "settings"].forEach((t) => $("#tab-" + t).style.display = t === b.dataset.tab ? "block" : "none");
+  ["orders", "deliveries", "wishlist", "settings"].forEach((t) => $("#tab-" + t).style.display = t === b.dataset.tab ? "block" : "none");
 }));
+$("#pushBtn").addEventListener("click", async () => {
+  const m = $("#pushMsg");
+  try { await enablePush(); m.className = "msg ok"; m.textContent = "✓ Notification চালু হয়েছে — অফার এলেই পেয়ে যাবেন"; }
+  catch (e) { m.className = "msg err"; m.textContent = e.message; }
+});
+async function loadWishlist() {
+  try {
+    const d = await api("wishlist");
+    const items = d.items || [];
+    $("#wishWrap").innerHTML = items.length ? items.map((p) => `
+      <div class="kv" style="align-items:center">
+        <span><b>${esc(p.name)}</b><br><span class="sub">${money(basePrice(p))}</span></span>
+        <span style="display:flex;gap:8px">
+          <a class="btn sm" href="${p.variants && p.variants.length ? "product.html?id=" + p.id : "order.html?id=" + p.id}">Order Now</a>
+          <button class="btn sm ghost" type="button" onclick="removeWish(${p.id})">সরান</button>
+        </span>
+      </div>`).join("") : '<div class="empty">Wishlist খালি — প্রোডাক্টে ♥ চাপলেই এখানে জমা হবে।</div>';
+  } catch (e) {}
+}
+window.removeWish = async (id) => { try { await api("wishlist/" + id, { method: "DELETE" }); loadWishlist(); } catch (e) {} };
+function daysLeft(o) {
+  if (!o.expires_at) return null;
+  return Math.ceil((new Date(o.expires_at + "T23:59:59") - Date.now()) / 86400000);
+}
 $("#logoutBtn").addEventListener("click", () => { store.del(TK); location.href = "index.html"; });
 function stepHtml(o) {
   const stages = ["Pending", "Confirmed", "Delivered"];
@@ -98,32 +139,31 @@ async function loadOrders() {
     $("#sDelivered").textContent = ordersCache.filter((o) => o.status === "Delivered").length;
     $("#sPending").textContent = ordersCache.filter((o) => o.status === "Pending").length;
     $("#sSpent").textContent = money(ordersCache.filter((o) => o.status !== "Cancelled").reduce((s, o) => s + (o.price - (o.discount || 0)), 0));
+    const soon = ordersCache.filter((o) => o.delivery_content && o.expires_at && daysLeft(o) !== null && daysLeft(o) <= 7);
+    $("#expiryWarn").innerHTML = soon.length ? `<div class="expiry-warn">⏰ <b>মেয়াদ শেষের সতর্কতা:</b> ${soon.map((o) => `${esc(o.product_name)} — ${daysLeft(o) < 0 ? "মেয়াদ শেষ!" : "আর " + daysLeft(o) + " দিন বাকি"}`).join(" · ")}<br><span>মেয়াদ বাড়াতে আবার অর্ডার করুন অথবা WhatsApp-এ যোগাযোগ করুন।</span></div>` : "";
     $("#ordersWrap").innerHTML = ordersCache.length ? `
-      <table><tr><th>Order ID</th><th>প্রোডাক্ট</th><th>দাম</th><th>স্ট্যাটাস</th><th>License Key / Download</th></tr>
+      <table><tr><th>Order ID</th><th>প্রোডাক্ট</th><th>দাম</th><th>স্ট্যাটাস</th><th>License Key / Download</th><th></th></tr>
       ${ordersCache.map((o) => `<tr>
         <td>#${o.id}<br><span class="sub">${esc((o.created_at || "").slice(0, 10))}</span></td>
         <td><b>${esc(o.product_name)}</b>${o.variant_label ? `<br><span class="sub">${esc(o.variant_label)}</span>` : ""}<br><span class="sub">${esc(o.payment_method)}${o.discount ? ` · 🎟️ ${esc(o.coupon_code)}` : ""}</span></td>
         <td>${money(o.price - (o.discount || 0))}${o.discount ? `<br><s class="sub">${money(o.price)}</s>` : ""}</td>
-        <td><span class="badge ${esc(o.status)}">${statusLabel(o.status)}</span></td>
-        <td>${o.delivery_content ? `<div class="keybox"><span>${esc(o.delivery_content)}</span><button class="btn sm ghost" type="button" onclick="copyKey(this)">Copy</button></div>` : '<span class="sub">প্রসেসিং চলছে</span>'}</td>
+        <td><span class="badge ${esc(o.status)}">${statusLabel(o.status)}</span>${o.expires_at && o.delivery_content ? `<br><span class="sub">${daysLeft(o) < 0 ? "মেয়াদ শেষ" : "মেয়াদ: " + daysLeft(o) + " দিন বাকি"}</span>` : ""}</td>
+        <td>${deliveryHtml(o.delivery_content)}</td>
+        <td><a class="btn sm ghost" href="invoice.html?id=${o.id}">🧾 রসিদ</a></td>
       </tr>`).join("")}
       </table>` : '<div class="empty">এখনো কোনো অর্ডার নেই। <a href="index.html">Shop থেকে কিনুন →</a></div>';
     const delivered = ordersCache.filter((o) => o.delivery_content);
     $("#delivWrap").innerHTML = delivered.length ? delivered.map((o) => `
       <div style="margin-bottom:16px">
-        <b>${esc(o.product_name)}</b>${o.variant_label ? ` <span class="sub">(${esc(o.variant_label)})</span>` : ""} <span class="sub">· Order #${o.id}</span>
-        <div class="keybox" style="margin-top:7px"><span>${esc(o.delivery_content)}</span><button class="btn sm ghost" type="button" onclick="copyKey(this)">Copy</button></div>
+        <b>${esc(o.product_name)}</b>${o.variant_label ? ` <span class="sub">(${esc(o.variant_label)})</span>` : ""} <span class="sub">· Order #${o.id}</span>${o.expires_at ? ` <span class="sub">· ${daysLeft(o) < 0 ? "মেয়াদ শেষ হয়ে গেছে" : "মেয়াদ শেষ: " + esc(o.expires_at) + " (" + daysLeft(o) + " দিন বাকি)"}</span>` : ""}
+        <div style="margin-top:7px">${deliveryHtml(o.delivery_content)}</div>
       </div>`).join("") : '<div class="empty">এখনো কোনো ডেলিভারি আসেনি। পেমেন্ট কনফার্ম হলে এখানে পেয়ে যাবেন।</div>';
   } catch (e) { $("#ordersWrap").innerHTML = '<div class="empty">' + esc(e.message) + "</div>"; }
 }
-window.copyKey = async (btn) => {
-  const text = btn.parentElement.querySelector("span").textContent;
-  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; setTimeout(() => btn.textContent = "Copy", 1500); } catch (e) {}
-};
 $("#nameForm").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const m = $("#nameMsg");
-  try { await api("me", { method: "PATCH", body: JSON.stringify({ name: $("#setName").value.trim() }) }); m.className = "msg ok"; m.textContent = "✓ নাম সেভ হয়েছে"; $("#pName").textContent = $("#setName").value.trim(); }
+  try { await api("me", { method: "PATCH", body: JSON.stringify({ name: $("#setName").value.trim(), email: $("#setEmail").value.trim() }) }); m.className = "msg ok"; m.textContent = "✓ সেভ হয়েছে"; $("#pName").textContent = $("#setName").value.trim(); }
   catch (e) { m.className = "msg err"; m.textContent = e.message; }
 });
 $("#passForm").addEventListener("submit", async (ev) => {

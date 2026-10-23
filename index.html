@@ -10,8 +10,8 @@
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<main class="wrap">
-  <section class="hero2">
+<main class="wrap" id="mainWrap">
+  <section class="hero2" data-sec="hero">
     <div class="hero-copy">
       <span class="eyebrow">Premium Digital Store · Bangladesh</span>
       <h1 id="heroTitle">Premium Software &amp; Tools</h1>
@@ -32,7 +32,7 @@
     </div>
   </section>
 
-  <section class="features">
+  <section class="features" data-sec="features">
     <div class="feature">
       <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z" stroke-linejoin="round"/></svg></div>
       <div><h4>Instant Delivery</h4><p>পেমেন্ট কনফার্ম হলেই অটো ডেলিভারি</p></div>
@@ -51,26 +51,48 @@
     </div>
   </section>
 
-  <div id="featuredWrap" style="display:none">
+  <div id="featuredWrap" data-sec="featured" style="display:none">
     <div class="sec-head">
       <div><h2 class="section-title">Featured প্রোডাক্ট</h2><p class="sub">আমাদের বাছাই করা সেরা কালেকশন</p></div>
     </div>
     <div id="featuredGrid" class="grid"></div>
   </div>
 
+  <div data-sec="catalog">
   <div class="sec-head" id="catalog">
     <div><h2 class="section-title">সব প্রোডাক্ট</h2><p class="sub">সব সফটওয়্যার ও টুলস এক জায়গায়</p></div>
   </div>
   <div class="toolbar">
-    <input id="search" type="text" placeholder="প্রোডাক্ট খুঁজুন...">
-    <select id="catFilter"><option value="">সব ক্যাটাগরি</option></select>
+    <div class="searchwrap">
+      <input id="search" type="text" placeholder="প্রোডাক্ট খুঁজুন..." autocomplete="off">
+      <div id="suggest" class="suggest" style="display:none"></div>
+    </div>
+    <select id="catFilter" style="flex:0 1 200px"><option value="">সব ক্যাটাগরি</option></select>
+    <select id="sortSel" style="flex:0 1 200px">
+      <option value="">সাজান: ডিফল্ট</option>
+      <option value="price_asc">দাম: কম → বেশি</option>
+      <option value="price_desc">দাম: বেশি → কম</option>
+      <option value="popular">বেশি বিক্রিত</option>
+      <option value="new">নতুন আগে</option>
+    </select>
+    <input id="priceMin" type="number" min="0" placeholder="সর্বনিম্ন ৳" style="flex:0 1 120px">
+    <input id="priceMax" type="number" min="0" placeholder="সর্বোচ্চ ৳" style="flex:0 1 120px">
   </div>
   <div id="grid" class="grid"></div>
   <div id="empty" class="empty" style="display:none">কোনো প্রোডাক্ট পাওয়া যায়নি।</div>
+  </div>
 </main>
 <script src="assets/app.js"></script>
 <script>
-let products = [], slideTimer = null;
+let products = [], slideTimer = null, WISH = new Set();
+window.toggleWish = async (id, btn) => {
+  if (!store.get(TK)) { location.href = "login.html?next=index.html"; return; }
+  try {
+    if (WISH.has(id)) { await api("wishlist/" + id, { method: "DELETE" }); WISH.delete(id); }
+    else { await api("wishlist", { method: "POST", body: JSON.stringify({ productId: id }) }); WISH.add(id); }
+    document.querySelectorAll(`.wishbtn[data-id="${id}"]`).forEach((b) => { b.classList.toggle("on", WISH.has(id)); b.textContent = WISH.has(id) ? "♥" : "♡"; });
+  } catch (e) {}
+};
 function cardHtml(p) {
   const bp = basePrice(p);
   const st = stockTotal(p);
@@ -78,12 +100,13 @@ function cardHtml(p) {
   return `
   <article class="card">
     ${p.featured ? '<span class="featured-tag">Featured</span>' : ""}
+    <button class="wishbtn ${WISH.has(p.id) ? "on" : ""}" data-id="${p.id}" type="button" title="Wishlist-এ রাখুন" onclick="toggleWish(${p.id}, this)">${WISH.has(p.id) ? "♥" : "♡"}</button>
     <a class="cardimg" href="product.html?id=${p.id}">${productImg(p)}</a>
     <div class="body">
       ${p.category ? `<div class="cat">${esc(p.category)}</div>` : ""}
       <h3><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
       ${p.description ? `<p class="sub" style="font-size:12.5px;min-height:34px">${esc(p.description.length > 70 ? p.description.slice(0, 70) + "…" : p.description)}</p>` : ""}
-      <div class="cardmeta"><span>Digital Delivery</span><span class="${st ? "instock" : ""}">${st ? "In Stock" : "On Confirm"}</span></div>
+      <div class="cardmeta"><span>${p.sold ? p.sold + " বার বিক্রি হয়েছে" : "Digital Delivery"}</span><span class="${st ? "instock" : ""}">${st ? "In Stock" : "On Confirm"}</span></div>
       <div class="price">${p.variants && p.variants.length ? '<span class="sub" style="font-size:12px">শুরু </span>' : ""}${money(bp)}${!p.variants?.length && p.old_price ? `<s>${money(p.old_price)}</s>` : ""}${!p.variants?.length && offPct(p.price, p.old_price) ? `<span class="off">-${offPct(p.price, p.old_price)}%</span>` : ""}</div>
       <a class="btn" href="${orderHref}">Order Now</a>
     </div>
@@ -94,6 +117,16 @@ function cardHtml(p) {
   if (site.maintenance && !store.get(ATK)) return;
   if (site.heroTitle) $("#heroTitle").textContent = site.heroTitle;
   if (site.heroSubtitle) $("#heroSub").textContent = site.heroSubtitle;
+  // Homepage section manager: reorder + hide sections per admin settings.
+  try {
+    const main = $("#mainWrap");
+    const order = Array.isArray(site.homeOrder) && site.homeOrder.length ? site.homeOrder : ["hero", "features", "featured", "catalog"];
+    const hidden = Array.isArray(site.homeHidden) ? site.homeHidden : [];
+    order.forEach((id) => { const el = document.querySelector(`[data-sec="${id}"]`); if (el) main.appendChild(el); });
+    hidden.forEach((id) => { const el = document.querySelector(`[data-sec="${id}"]`); if (el) el.style.display = "none"; });
+    if (hidden.includes("featured")) site.showFeatured = false;
+  } catch (e) {}
+  if (store.get(TK)) { try { const w = await api("wishlist"); WISH = new Set(w.ids || []); } catch (e) {} }
   try {
     const b = await api("banners");
     const banners = b.banners || [];
@@ -108,13 +141,19 @@ function cardHtml(p) {
             ${bn.subtitle ? `<p>${esc(bn.subtitle)}</p>` : ""}
             ${bn.button_text ? `<a class="btn" href="${esc(bn.button_link || "#")}">${esc(bn.button_text)}</a>` : ""}
           </div>
-        </div>`).join("") + (banners.length > 1 ? `<div class="dots">${banners.map((_, i) => `<button data-i="${i}" class="${i === 0 ? "on" : ""}"></button>`).join("")}</div>` : "");
+        </div>`).join("") + (banners.length > 1 ? `<button class="snav prev" type="button" aria-label="আগের ব্যানার">‹</button><button class="snav next" type="button" aria-label="পরের ব্যানার">›</button><div class="dots">${banners.map((_, i) => `<button data-i="${i}" class="${i === 0 ? "on" : ""}"></button>`).join("")}</div>` : "");
       const slides = [...document.querySelectorAll(".slide")];
       const dots = [...document.querySelectorAll(".dots button")];
       let cur = 0;
-      const go = (i) => { cur = i; slides.forEach((s, j) => s.classList.toggle("on", j === i)); dots.forEach((d, j) => d.classList.toggle("on", j === i)); };
+      const go = (i) => { cur = (i + slides.length) % slides.length; slides.forEach((s, j) => s.classList.toggle("on", j === cur)); dots.forEach((d, j) => d.classList.toggle("on", j === cur)); };
       dots.forEach((d) => d.addEventListener("click", () => { go(Number(d.dataset.i)); restart(); }));
-      const restart = () => { clearInterval(slideTimer); if (slides.length > 1) slideTimer = setInterval(() => go((cur + 1) % slides.length), 4500); };
+      const prevB = document.querySelector(".snav.prev"), nextB = document.querySelector(".snav.next");
+      if (prevB) prevB.addEventListener("click", () => { go(cur - 1); restart(); });
+      if (nextB) nextB.addEventListener("click", () => { go(cur + 1); restart(); });
+      const restart = () => { clearInterval(slideTimer); if (slides.length > 1) slideTimer = setInterval(() => go(cur + 1), 4500); };
+      const sliderEl = $("#slider");
+      sliderEl.addEventListener("mouseenter", () => clearInterval(slideTimer));
+      sliderEl.addEventListener("mouseleave", restart);
       restart();
     }
   } catch (e) {}
@@ -131,12 +170,36 @@ function cardHtml(p) {
 function draw() {
   const q = $("#search").value.trim().toLowerCase();
   const cat = $("#catFilter").value;
-  const list = products.filter((p) => (!q || (p.name + " " + (p.description || "")).toLowerCase().includes(q)) && (!cat || p.category === cat));
+  const sort = $("#sortSel").value;
+  const mn = Number($("#priceMin").value) || 0;
+  const mx = Number($("#priceMax").value) || 0;
+  let list = products.filter((p) => {
+    const bp = basePrice(p);
+    return (!q || (p.name + " " + (p.description || "")).toLowerCase().includes(q)) && (!cat || p.category === cat) && (!mn || bp >= mn) && (!mx || bp <= mx);
+  });
+  if (sort === "price_asc") list = [...list].sort((a, b) => basePrice(a) - basePrice(b));
+  else if (sort === "price_desc") list = [...list].sort((a, b) => basePrice(b) - basePrice(a));
+  else if (sort === "popular") list = [...list].sort((a, b) => (b.sold || 0) - (a.sold || 0));
+  else if (sort === "new") list = [...list].sort((a, b) => b.id - a.id);
   $("#empty").style.display = list.length ? "none" : "block";
   $("#grid").innerHTML = list.map(cardHtml).join("");
+  drawSuggest(q);
 }
+function drawSuggest(q) {
+  const box = $("#suggest");
+  if (!q) { box.style.display = "none"; box.innerHTML = ""; return; }
+  const hits = products.filter((p) => (p.name + " " + (p.description || "")).toLowerCase().includes(q)).slice(0, 6);
+  if (!hits.length) { box.style.display = "none"; return; }
+  box.innerHTML = hits.map((p) => `<a href="product.html?id=${p.id}">${p.image_url ? `<img src="${esc(p.image_url)}" alt="">` : ""}<span>${esc(p.name)}</span><span class="sp">${money(basePrice(p))}</span></a>`).join("");
+  box.style.display = "block";
+}
+document.addEventListener("click", (e) => { if (!e.target.closest(".searchwrap")) $("#suggest").style.display = "none"; });
 $("#search").addEventListener("input", draw);
+$("#search").addEventListener("focus", draw);
 $("#catFilter").addEventListener("change", draw);
+$("#sortSel").addEventListener("change", draw);
+$("#priceMin").addEventListener("input", draw);
+$("#priceMax").addEventListener("input", draw);
 </script>
 </body>
 </html>

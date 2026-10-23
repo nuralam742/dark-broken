@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page — —͞Dᴀʀᴋ Bʀᴏᴋᴇɴ !i</title>
+<link href="https://fonts.cdnfonts.com/css/black-mustang" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap">
+  <section class="panel wide">
+    <h2 id="pgTitle">Loading...</h2>
+    <div class="desc" id="pgBody" style="margin-top:12px"></div>
+  </section>
+  <p style="text-align:center"><a class="btn" href="index.html">← Shop-এ ফিরে যান</a></p>
+</main>
+<script src="assets/app.js"></script>
+<script>
+(async () => {
+  const site = await renderChrome("");
+  if (site.maintenance && !store.get(ATK)) return;
+  const slug = new URLSearchParams(location.search).get("slug") || "";
+  try {
+    const d = await api("pages/" + encodeURIComponent(slug));
+    document.title = d.page.title + " — —͞Dᴀʀᴋ Bʀᴏᴋᴇɴ !i";
+    $("#pgTitle").textContent = d.page.title;
+    $("#pgBody").innerHTML = esc(d.page.content || "").replace(/\n/g, "<br>");
+  } catch (e) {
+    $("#pgTitle").textContent = "পেজটি পাওয়া যায়নি";
+    $("#pgBody").textContent = "এই পেজটি সরানো হয়েছে বা এখনো প্রকাশিত হয়নি।";
+  }
+})();
+</script>
+</body>
+</html>

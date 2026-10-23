@@ -46,7 +46,7 @@ async function renderChrome(active) {
     : "";
   const nameHtml = esc(site.siteName || "—͞Dᴀʀᴋ Bʀᴏᴋᴇɴ !i");
   const announce = site.announcementOn && site.announcement
-    ? `<div class="announce">${esc(site.announcement)}</div>` : "";
+    ? `<div class="announce"><span class="marq">${esc(site.announcement)}</span></div>` : "";
   document.body.insertAdjacentHTML("afterbegin", `
   ${announce}
   <header><div class="wrap nav">
@@ -54,6 +54,7 @@ async function renderChrome(active) {
     <span class="tagline">${esc(site.tagline || "")}</span>
     <nav class="nav-links">
       <a href="index.html"${page("shop")}>Home</a>
+      <a href="track.html"${page("track")}>Track Order</a>
       ${loggedIn ? `<a href="dashboard.html"${page("dashboard")}>My Purchases</a>` : `<a href="login.html"${page("login")}>Login</a>`}
     </nav>
   </div></header>`);
@@ -69,7 +70,9 @@ async function renderChrome(active) {
         <h5>Quick Links</h5>
         <a href="index.html">Home</a>
         <a href="dashboard.html">My Purchases</a>
+        <a href="track.html">Track Order</a>
         <a href="login.html">Login</a>
+        <span id="customPages"></span>
       </div>
       <div>
         <h5>Policies</h5>
@@ -92,7 +95,91 @@ async function renderChrome(active) {
     document.body.insertAdjacentHTML("beforeend",
       `<a class="wa-float" target="_blank" rel="noopener" href="https://wa.me/${intl}" title="WhatsApp-এ মেসেজ করুন">${WA_SVG}</a>`);
   }
+  // Custom pages (built from the admin panel) appear in the footer.
+  try {
+    const pg = await api("pages");
+    const box = document.getElementById("customPages");
+    if (box && pg.pages && pg.pages.length) box.innerHTML = pg.pages.map((p) => `<a href="page.html?slug=${encodeURIComponent(p.slug)}">${esc(p.title)}</a>`).join("");
+  } catch (e) {}
+  maybeShowPopup(site);
+  registerSW();
   return site;
+}
+
+/* ---------- Offer popup (once per day) ---------- */
+function maybeShowPopup(site) {
+  if (!site.popupOn || !site.popupTitle) return;
+  if (location.pathname.includes("admin-x8362")) return;
+  const key = "db_popup_day";
+  const today = new Date().toISOString().slice(0, 10);
+  if (store.get(key) === today) return;
+  setTimeout(() => {
+    if (document.querySelector(".promo-modal")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "promo-modal";
+    wrap.innerHTML = `<div class="promo-box">
+      ${site.popupImage ? `<img src="${esc(site.popupImage)}" alt="">` : ""}
+      <div class="pb">
+        <h3>${esc(site.popupTitle)}</h3>
+        ${site.popupText ? `<p class="sub" style="font-size:14px;line-height:1.65">${esc(site.popupText)}</p>` : ""}
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap">
+          ${site.popupLink ? `<a class="btn" href="${esc(site.popupLink)}">${esc(site.popupBtn || "অফারটি দেখুন")}</a>` : ""}
+          <button class="btn ghost" type="button" id="promoClose">পরে দেখব</button>
+        </div>
+      </div></div>`;
+    document.body.appendChild(wrap);
+    const close = () => { store.set(key, today); wrap.remove(); };
+    wrap.querySelector("#promoClose").addEventListener("click", close);
+    wrap.addEventListener("click", (ev) => { if (ev.target === wrap) close(); });
+  }, 900);
+}
+
+/* ---------- Web Push ---------- */
+function registerSW() {
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+function urlB64ToUint8(b64) {
+  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+async function enablePush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) throw new Error("এই ব্রাউজারে Push Notification সাপোর্ট নেই");
+  const key = await api("push/key");
+  if (!key.publicKey) throw new Error("Push এখনো চালু হয়নি — Admin সেটআপ বাকি");
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") throw new Error("Notification-এর অনুমতি দেওয়া হয়নি");
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(key.publicKey) });
+  await api("push/subscribe", { method: "POST", body: JSON.stringify(sub.toJSON()) });
+  return true;
+}
+
+/* ---------- Shared delivery renderer + gallery helper ---------- */
+function allImages(p) {
+  const arr = [];
+  if (p.image_url) arr.push(p.image_url);
+  for (const im of p.images || []) if (im && !arr.includes(im)) arr.push(im);
+  return arr;
+}
+window.copyKey = async (btn) => {
+  const span = btn.parentElement.querySelector("span");
+  const text = span ? span.textContent : "";
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied ✓"; setTimeout(() => (btn.textContent = "Copy"), 1500); } catch (e) {}
+};
+function deliveryHtml(content) {
+  if (!content) return '<span class="sub">প্রসেসিং চলছে</span>';
+  if (content.startsWith("FILE::")) {
+    const rest = content.slice(6);
+    const idx = rest.indexOf("::");
+    const name = idx >= 0 ? rest.slice(0, idx) : "download";
+    const data = idx >= 0 ? rest.slice(idx + 2) : "";
+    return `<div class="keybox"><span>📥 ${esc(name)}</span><a class="btn sm" href="${data}" download="${esc(name)}">Download</a></div>`;
+  }
+  if (/^https?:\/\//i.test(content)) {
+    return `<div class="keybox"><span>${esc(content)}</span><a class="btn sm ghost" href="${esc(content)}" target="_blank" rel="noopener">Open</a><button class="btn sm ghost" type="button" onclick="copyKey(this)">Copy</button></div>`;
+  }
+  return `<div class="keybox"><span>${esc(content)}</span><button class="btn sm ghost" type="button" onclick="copyKey(this)">Copy</button></div>`;
 }
 
 function statusLabel(s) {

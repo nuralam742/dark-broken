@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice — —͞Dᴀʀᴋ Bʀᴏᴋᴇɴ !i</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter','Hind Siliguri',sans-serif;background:#0a0d16;color:#131722;padding:28px 16px}
+  .sheet{max-width:720px;margin:0 auto;background:#fff;border-radius:14px;padding:38px 40px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #131722;padding-bottom:18px}
+  .brand{font-size:22px;font-weight:700}
+  .inv{font-size:13px;color:#5b6474;text-align:right}
+  table{width:100%;border-collapse:collapse;margin-top:22px;font-size:14px}
+  th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #e6e9f0}
+  th{color:#5b6474;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+  .tot{display:flex;justify-content:flex-end;margin-top:16px}
+  .tot table{width:260px;margin:0}
+  .tot td{border:none;padding:5px 8px}
+  .grand{font-size:17px;font-weight:700}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 30px;margin-top:22px;font-size:13.5px;color:#333a48}
+  .meta b{color:#131722}
+  .foot{margin-top:30px;font-size:12.5px;color:#5b6474;border-top:1px dashed #ccd2de;padding-top:14px;text-align:center}
+  .noprint{text-align:center;margin-top:18px}
+  .btn{background:#2742f5;color:#fff;border:none;padding:12px 26px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn.ghost{background:transparent;color:#98a2b8;border:1px solid #39415a;margin-left:8px}
+  @media print{ body{background:#fff;padding:0} .sheet{box-shadow:none;border-radius:0} .noprint{display:none} }
+</style>
+</head>
+<body>
+<div class="sheet" id="sheet">
+  <p style="color:#5b6474" id="loading">রসিদ তৈরি হচ্ছে...</p>
+</div>
+<div class="noprint">
+  <button class="btn" onclick="window.print()">🖨️ Print / PDF ডাউনলোড</button>
+  <a href="dashboard.html"><button class="btn ghost">← Dashboard</button></a>
+</div>
+<script src="assets/app.js"></script>
+<script>
+(async () => {
+  const id = Number(new URLSearchParams(location.search).get("id"));
+  if (!store.get(TK)) { location.href = "login.html?next=dashboard.html"; return; }
+  try {
+    const site = await loadSite();
+    const d = await api("my/orders");
+    const o = (d.orders || []).find((x) => x.id === id);
+    if (!o) { $("#loading").textContent = "এই অর্ডারটি পাওয়া যায়নি।"; return; }
+    const paid = o.price - (o.discount || 0);
+    $("#sheet").innerHTML = `
+      <div class="head">
+        <div>
+          <div class="brand">${esc(site.siteName || "—͞Dᴀʀᴋ Bʀᴏᴋᴇɴ !i")}</div>
+          <div style="font-size:13px;color:#5b6474;margin-top:4px">${esc(site.tagline || "Premium Software & Tools — Bangladesh")}</div>
+        </div>
+        <div class="inv">INVOICE<br><b style="color:#131722;font-size:16px">#${o.id}</b><br>${esc((o.created_at || "").slice(0, 10))}</div>
+      </div>
+      <div class="meta">
+        <div>ক্রেতা: <b>${esc(o.customer_name)}</b></div>
+        <div>মোবাইল: <b>${esc(o.customer_mobile)}</b></div>
+        <div>পেমেন্ট: <b>${esc(o.payment_method)}</b> (${esc(o.payment_number)})</div>
+        <div>TrxID: <b>${esc(o.trx_id)}</b></div>
+        <div>স্ট্যাটাস: <b>${statusLabel(o.status)}</b></div>
+        ${o.expires_at ? `<div>মেয়াদ শেষ: <b>${esc(o.expires_at)}</b></div>` : ""}
+      </div>
+      <table>
+        <tr><th>প্রোডাক্ট</th><th style="text-align:right">দাম</th></tr>
+        <tr><td><b>${esc(o.product_name)}</b>${o.variant_label ? " — " + esc(o.variant_label) : ""}</td><td style="text-align:right">${money(o.price)}</td></tr>
+      </table>
+      <div class="tot"><table>
+        ${o.discount ? `<tr><td>কুপন ছাড় (${esc(o.coupon_code)})</td><td style="text-align:right">−${money(o.discount)}</td></tr>` : ""}
+        <tr><td class="grand">সর্বমোট পরিশোধিত</td><td class="grand" style="text-align:right">${money(paid)}</td></tr>
+      </table></div>
+      <div class="foot">ধন্যবাদ! ডেলিভারি সংক্রান্ত যেকোনো প্রয়োজনে WhatsApp-এ যোগাযোগ করুন।<br>এই রসিদটি কম্পিউটারে তৈরি — সইয়ের প্রয়োজন নেই।</div>`;
+  } catch (e) { $("#loading").textContent = e.message; }
+})();
+</script>
+</body>
+</html>

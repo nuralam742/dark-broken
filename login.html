@@ -22,11 +22,18 @@
         <label>আপনার নাম</label>
         <input id="aName" placeholder="আপনার নাম">
       </div>
-      <label>মোবাইল নম্বর</label>
-      <input id="aMobile" required placeholder="01XXXXXXXXX" inputmode="numeric">
+      <div id="emailField" style="display:none">
+        <label>ইমেইল (ঐচ্ছিক — দিলে ইমেইল দিয়েও Login করতে পারবেন)</label>
+        <input id="aEmailReg" type="email" placeholder="you@example.com">
+      </div>
+      <div id="mobileField">
+        <label id="idLabel">মোবাইল নম্বর</label>
+        <input id="aMobile" required placeholder="01XXXXXXXXX" inputmode="numeric">
+      </div>
       <label>পাসওয়ার্ড</label>
       <input id="aPass" type="password" required placeholder="পাসওয়ার্ড">
       <button class="btn" style="width:100%;margin-top:18px" type="submit" id="authBtn">Login</button>
+      <button class="btn ghost" style="width:100%;margin-top:10px" type="button" id="emailToggle">✉️ Continue with Email</button>
       <div class="msg" id="authMsg"></div>
     </form>
   </section>
@@ -36,15 +43,32 @@
 (async () => { const site = await renderChrome("login"); if (site.maintenance && !store.get(ATK)) return; })();
 if (store.get(TK)) location.href = "dashboard.html";
 const next = new URLSearchParams(location.search).get("next") || "dashboard.html";
-let mode = "login";
+let mode = "login", loginVia = "mobile";
 function setMode(m) {
   mode = m;
   $("#tabLogin").classList.toggle("on", m === "login");
   $("#tabReg").classList.toggle("on", m === "register");
   $("#nameField").style.display = m === "register" ? "block" : "none";
+  $("#emailField").style.display = m === "register" ? "block" : "none";
+  $("#emailToggle").style.display = m === "login" ? "block" : "none";
   $("#authTitle").textContent = m === "register" ? "নতুন অ্যাকাউন্ট খুলুন" : "Login করুন";
   $("#authBtn").textContent = m === "register" ? "Register" : "Login";
+  if (m === "register") setVia("mobile");
 }
+function setVia(v) {
+  loginVia = v;
+  const inp = $("#aMobile");
+  if (v === "email") {
+    $("#idLabel").textContent = "ইমেইল ঠিকানা";
+    inp.placeholder = "you@example.com"; inp.removeAttribute("inputmode"); inp.type = "email";
+    $("#emailToggle").textContent = "📱 Continue with Mobile";
+  } else {
+    $("#idLabel").textContent = "মোবাইল নম্বর";
+    inp.placeholder = "01XXXXXXXXX"; inp.setAttribute("inputmode", "numeric"); inp.type = "text";
+    $("#emailToggle").textContent = "✉️ Continue with Email";
+  }
+}
+$("#emailToggle").addEventListener("click", () => setVia(loginVia === "mobile" ? "email" : "mobile"));
 $("#tabLogin").addEventListener("click", () => setMode("login"));
 $("#tabReg").addEventListener("click", () => setMode("register"));
 $("#authForm").addEventListener("submit", async (ev) => {
@@ -52,8 +76,8 @@ $("#authForm").addEventListener("submit", async (ev) => {
   const m = $("#authMsg"); m.className = "msg"; m.textContent = "অপেক্ষা করুন...";
   try {
     const payload = mode === "register"
-      ? { name: $("#aName").value.trim(), mobile: $("#aMobile").value.trim(), password: $("#aPass").value }
-      : { mobile: $("#aMobile").value.trim(), password: $("#aPass").value };
+      ? { name: $("#aName").value.trim(), mobile: $("#aMobile").value.trim(), email: $("#aEmailReg").value.trim(), password: $("#aPass").value }
+      : { identifier: $("#aMobile").value.trim(), password: $("#aPass").value };
     const d = await api(mode === "register" ? "auth/register" : "auth/login", { method: "POST", body: JSON.stringify(payload) });
     store.set(TK, d.token);
     location.href = next;

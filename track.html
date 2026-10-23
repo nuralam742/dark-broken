@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Order — —͞Dᴀʀᴋ Bʀᴏᴋᴇɴ !i</title>
+<link href="https://fonts.cdnfonts.com/css/black-mustang" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap">
+  <section class="panel">
+    <h2>Order Tracking</h2>
+    <p class="sub">আপনার Order ID আর অর্ডারের সময় দেওয়া মোবাইল নম্বর দিলেই স্ট্যাটাস দেখতে পারবেন — Login লাগবে না।</p>
+    <form id="trackForm">
+      <label>Order ID</label>
+      <input id="tId" required placeholder="যেমন: 12" inputmode="numeric">
+      <label>মোবাইল নম্বর</label>
+      <input id="tMobile" required placeholder="01XXXXXXXXX" inputmode="numeric">
+      <button class="btn" style="width:100%;margin-top:18px" type="submit">স্ট্যাটাস দেখুন</button>
+      <div class="msg" id="tMsg"></div>
+    </form>
+    <div id="tResult" style="margin-top:8px"></div>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+<script>
+(async () => { const site = await renderChrome("track"); if (site.maintenance && !store.get(ATK)) return; })();
+$("#trackForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const m = $("#tMsg"); m.className = "msg"; m.textContent = "খোঁজা হচ্ছে...";
+  $("#tResult").innerHTML = "";
+  try {
+    const d = await api("track?orderId=" + encodeURIComponent($("#tId").value.trim()) + "&mobile=" + encodeURIComponent($("#tMobile").value.trim()));
+    const o = d.order;
+    m.textContent = "";
+    const stages = ["Pending", "Confirmed", "Delivered"];
+    const idx = stages.indexOf(o.status);
+    const steps = o.status === "Cancelled"
+      ? '<p style="color:var(--bad);font-size:13.5px;margin-top:10px">❌ এই অর্ডারটি Cancel করা হয়েছে — সাহায্যের জন্য WhatsApp-এ যোগাযোগ করুন।</p>'
+      : `<div class="steps">${stages.map((s, i) => `<div class="step ${i < idx ? "done" : ""} ${i === idx ? (o.status === "Delivered" ? "done" : "now") : ""}">${s === "Pending" ? "অর্ডার হয়েছে" : s === "Confirmed" ? "কনফার্ম" : "ডেলিভারি"}</div>`).join("")}</div>`;
+    $("#tResult").innerHTML = `
+      <div class="kv"><span>Order</span><b>#${o.id}</b></div>
+      <div class="kv"><span>প্রোডাক্ট</span><b>${esc(o.product_name)}${o.variant_label ? " (" + esc(o.variant_label) + ")" : ""}</b></div>
+      <div class="kv"><span>টাকা</span><b>${money(o.price)}</b></div>
+      <div class="kv"><span>স্ট্যাটাস</span><b>${statusLabel(o.status)}</b></div>
+      <div class="kv"><span>তারিখ</span><b>${esc((o.created_at || "").slice(0, 10))}</b></div>
+      ${o.expires_at ? `<div class="kv"><span>মেয়াদ শেষ</span><b>${esc(o.expires_at)}</b></div>` : ""}
+      ${steps}
+      ${o.delivered ? '<p class="sub" style="margin-top:10px">✅ ডেলিভারি হয়ে গেছে — আপনার <a href="dashboard.html">Dashboard</a>-এ কী/লিংক পেয়ে যাবেন।</p>' : ""}`;
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+});
+</script>
+</body>
+</html>
