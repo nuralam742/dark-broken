@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — —͞Dᴀʀᴋ Bʀᴏᴋᴇɴ !i</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.cdnfonts.com/css/black-mustang" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap">
+  <section class="panel" id="gatePanel">
+    <h2>Admin Panel</h2>
+    <p class="sub" id="gateSub">Passcode দিয়ে ঢুকুন।</p>
+    <form id="gateForm">
+      <label>Admin Passcode</label>
+      <input id="gatePass" type="password" placeholder="Passcode">
+      <button class="btn" style="width:100%;margin-top:16px" type="submit" id="gateBtn">Login</button>
+      <div class="msg" id="gateMsg"></div>
+    </form>
+  </section>
+
+  <section id="dashPanel" style="display:none">
+    <section class="panel wide" style="margin-bottom:14px">
+      <div class="profile-head">
+        <div><h2>Admin Dashboard</h2><p class="sub">পুরো সাইটের নিয়ন্ত্রণ এখান থেকে</p></div>
+        <button class="btn ghost sm" id="adminLogout" style="margin-left:auto">Logout</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="n" id="stRevenue">৳0</div><div class="t">মোট আয়</div></div>
+        <div class="stat"><div class="n" id="stOrders">0</div><div class="t">মোট Order</div></div>
+        <div class="stat"><div class="n" id="stPending">0</div><div class="t">Pending</div></div>
+        <div class="stat"><div class="n" id="stDelivered">0</div><div class="t">Delivered</div></div>
+        <div class="stat"><div class="n" id="stProducts">0</div><div class="t">প্রোডাক্ট</div></div>
+        <div class="stat"><div class="n" id="stUsers">0</div><div class="t">কাস্টমার</div></div>
+      </div>
+      <div class="msg" id="lowStockWarn"></div>
+    </section>
+
+    <div class="admin-tabs" style="max-width:860px;margin-left:auto;margin-right:auto">
+      <button data-tab="banners" type="button">Banners</button>
+      <button data-tab="products" class="on" type="button">Products</button>
+      <button data-tab="stock" type="button">Delivery Stock</button>
+      <button data-tab="orders" type="button">Orders</button>
+      <button data-tab="coupons" type="button">Coupons</button>
+      <button data-tab="users" type="button">Users</button>
+      <button data-tab="settings" type="button">Site Settings</button>
+    </div>
+
+    <!-- BANNERS -->
+    <section class="panel wide" id="tab-banners" style="display:none">
+      <h2 id="bnFormTitle">নতুন ব্যানার</h2>
+      <p class="sub">হোম পেজের উপরে স্লাইডার হিসেবে দেখাবে। ছবি ছাড়া দিলে শুধু লেখার ব্যানার হবে।</p>
+      <form id="bnForm">
+        <input type="hidden" id="bnId">
+        <label>ব্যানারের ছবি আপলোড</label>
+        <input id="bnImgFile" type="file" accept="image/*">
+        <label>অথবা ছবির URL</label>
+        <input id="bnImg" placeholder="https://...">
+        <div id="bnPreview" style="margin-top:6px"></div>
+        <label>শিরোনাম (Title)</label>
+        <input id="bnTitle" placeholder="যেমন: ঈদ ধামাকা অফার!">
+        <label>ছোট লেখা (Subtitle)</label>
+        <input id="bnSub" placeholder="সব প্রোডাক্টে ২০% পর্যন্ত ছাড়">
+        <div class="row2">
+          <div><label>বাটনের লেখা</label><input id="bnBtn" placeholder="এখনই কিনুন"></div>
+          <div><label>বাটনের লিংক</label><input id="bnLink" placeholder="product.html?id=1 বা index.html"></div>
+        </div>
+        <div class="row2">
+          <div><label>ক্রম (Sort — ছোট আগে)</label><input id="bnSort" type="number" value="0"></div>
+          <div><label class="switchrow" style="margin-top:34px"><input type="checkbox" id="bnActive" checked> ব্যানার চালু (দেখাবে)</label></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button class="btn" type="submit" id="bnSaveBtn">Save Banner</button>
+          <button class="btn ghost" type="button" id="bnCancel" style="display:none">Cancel</button>
+        </div>
+        <div class="msg" id="bnMsg"></div>
+      </form>
+      <h2 style="margin-top:24px">সব ব্যানার</h2>
+      <div id="bnList"></div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section class="panel wide" id="tab-products">
+      <h2 id="formTitle">নতুন প্রোডাক্ট</h2>
+      <form id="prodForm">
+        <input type="hidden" id="pId">
+        <label>প্রোডাক্টের নাম *</label>
+        <input id="pName" required placeholder="যেমন: Premium Tool Pro">
+        <label>বিবরণ</label>
+        <textarea id="pDesc" rows="3" placeholder="কী পাবেন, মেয়াদ কতদিন, কীভাবে ব্যবহার করবেন..."></textarea>
+        <div class="row2">
+          <div><label>সাধারণ দাম (৳) *</label><input id="pPrice" type="number" min="1" required placeholder="499"></div>
+          <div><label>আগের দাম (৳) — ঐচ্ছিক</label><input id="pOldPrice" type="number" min="0" placeholder="999"></div>
+        </div>
+        <div class="row2">
+          <div><label>ক্যাটাগরি</label><input id="pCat" placeholder="Tools / VPN"></div>
+          <div><label class="switchrow" style="margin-top:30px"><input type="checkbox" id="pFeatured"> Featured (হোমে উপরে দেখাবে)</label></div>
+        </div>
+        <label>ছবির URL — ঐচ্ছিক</label>
+        <input id="pImg" placeholder="https://...">
+        <label>অথবা ছবি আপলোড</label>
+        <input id="pImgFile" type="file" accept="image/*">
+        <div id="imgPreview" style="margin-top:6px"></div>
+        <h3 style="margin-top:20px;font-size:15.5px">ভার্সন / প্যাকেজ (ঐচ্ছিক)</h3>
+        <p class="sub">ভার্সন দিলে কাস্টমার প্যাকেজ বেছে কিনবে (যেমন ১ মাস / ১ বছর)। খালি রাখলে সাধারণ দামেই বিক্রি হবে।</p>
+        <div id="varRows"></div>
+        <button class="btn sm ghost" type="button" id="addVar" style="margin-top:8px">+ ভার্সন যোগ করুন</button>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button class="btn" type="submit" id="prodBtn">Save Product</button>
+          <button class="btn ghost" type="button" id="cancelEdit" style="display:none">Cancel Edit</button>
+        </div>
+        <div class="msg" id="prodMsg"></div>
+      </form>
+      <h2 style="margin-top:26px">সব প্রোডাক্ট</h2>
+      <div id="prodList"></div>
+    </section>
+
+    <!-- STOCK -->
+    <section class="panel wide" id="tab-stock" style="display:none">
+      <h2>Delivery Stock (লাইসেন্স কী / লিংক)</h2>
+      <p class="sub">এখানে আগেভাগে কী/লিংক জমা রাখুন — অর্ডার Confirm/Delivered করলেই একটা করে অটো কাস্টমারের Dashboard-এ চলে যাবে। এক লাইনে একটা করে লিখুন।</p>
+      <form id="stockForm">
+        <label>প্রোডাক্ট</label>
+        <select id="skProduct"></select>
+        <label>ভার্সন (যদি থাকে)</label>
+        <select id="skVariant"><option value="">সাধারণ (ভার্সন ছাড়া)</option></select>
+        <label>কী / লিংকসমূহ (এক লাইনে একটা)</label>
+        <textarea id="skItems" rows="5" placeholder="KEY-XXXX-1111&#10;KEY-XXXX-2222&#10;https://download.link/abc"></textarea>
+        <button class="btn" style="margin-top:14px" type="submit">Stock যোগ করুন</button>
+        <div class="msg" id="skMsg"></div>
+      </form>
+      <h2 style="margin-top:22px">স্টকের অবস্থা</h2>
+      <div id="stockList"></div>
+    </section>
+
+    <!-- ORDERS -->
+    <section class="panel wide" id="tab-orders" style="display:none">
+      <h2>সব Order</h2>
+      <p class="sub">স্ট্যাটাস Confirmed/Delivered করলে স্টক থেকে অটো ডেলিভারি যাবে। স্টক না থাকলে "Manual delivery" ঘরে নিজে লিখে Save করুন।</p>
+      <div id="orderList"></div>
+    </section>
+
+    <!-- COUPONS -->
+    <section class="panel wide" id="tab-coupons" style="display:none">
+      <h2>নতুন কুপন</h2>
+      <form id="couponForm">
+        <div class="row2">
+          <div><label>কুপন কোড</label><input id="cpCode" required placeholder="WELCOME10"></div>
+          <div><label>ধরন</label><select id="cpType"><option value="percent">Percent (%)</option><option value="flat">Flat (৳)</option></select></div>
+        </div>
+        <label>ছাড়ের পরিমাণ</label>
+        <input id="cpValue" type="number" min="1" required placeholder="10">
+        <button class="btn" style="margin-top:14px" type="submit">কুপন তৈরি করুন</button>
+        <div class="msg" id="cpMsg"></div>
+      </form>
+      <h2 style="margin-top:22px">সব কুপন</h2>
+      <div id="couponList"></div>
+    </section>
+
+    <!-- USERS -->
+    <section class="panel wide" id="tab-users" style="display:none">
+      <h2>সব কাস্টমার</h2>
+      <p class="sub">Block করা কাস্টমার Login/Order করতে পারবে না।</p>
+      <div id="userList"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="panel wide" id="tab-settings" style="display:none">
+      <h2>Site Settings — পুরো সাইটের নিয়ন্ত্রণ</h2>
+      <form id="siteForm">
+        <h3 style="margin-top:14px">চেহারা</h3>
+        <label>লোগো ছবি আপলোড (খালি রাখলে শুধু নাম দেখাবে)</label>
+        <input id="sLogoFile" type="file" accept="image/*">
+        <label>অথবা লোগোর URL</label>
+        <input id="sLogoUrl" placeholder="https://...">
+        <div id="logoPreview" style="margin-top:6px"></div>
+        <div class="row2">
+          <div><label>সাইটের নাম</label><input id="sSiteName"></div>
+          <div><label>ট্যাগলাইন</label><input id="sTagline"></div>
+        </div>
+        <label class="switchrow"><input type="checkbox" id="sAnnOn"> উপরে ঘোষণা বার চালু</label>
+        <input id="sAnn" placeholder="🎉 অফারের ঘোষণা লিখুন">
+        <div class="row2">
+          <div><label>হোমের বড় শিরোনাম</label><input id="sHeroTitle"></div>
+          <div><label>হোমের ছোট লেখা</label><input id="sHeroSub"></div>
+        </div>
+        <label class="switchrow"><input type="checkbox" id="sShowFeatured"> হোমে Featured সেকশন দেখাও</label>
+        <label class="switchrow"><input type="checkbox" id="sMaint"> Maintenance Mode (সাইট বন্ধ দেখাবে)</label>
+        <input id="sMaintText" placeholder="বন্ধের সময়ের বার্তা">
+        <h3 style="margin-top:22px">পেমেন্ট ও যোগাযোগ</h3>
+        <div class="row2">
+          <div><label>bKash নম্বর</label><input id="sBkash" placeholder="01XXXXXXXXX"></div>
+          <div><label>Nagad নম্বর</label><input id="sNagad" placeholder="01XXXXXXXXX"></div>
+        </div>
+        <div class="row2">
+          <div><label>Rocket নম্বর</label><input id="sRocket" placeholder="01XXXXXXXXX"></div>
+          <div><label>WhatsApp নম্বর (ফ্লোটিং বাটন)</label><input id="sWhatsapp" placeholder="01XXXXXXXXX"></div>
+        </div>
+        <label>পেমেন্ট নির্দেশনা (Order পেজে দেখাবে)</label>
+        <textarea id="sPayNote" rows="2"></textarea>
+        <label>ডেলিভারি বার্তা (কাস্টমার Dashboard-এ দেখাবে)</label>
+        <textarea id="sDeliveryMsg" rows="2"></textarea>
+        <h3 style="margin-top:22px">পলিসি লেখাসমূহ</h3>
+        <label>Delivery Policy</label><textarea id="sPolDelivery" rows="3"></textarea>
+        <label>Refund Policy</label><textarea id="sPolRefund" rows="3"></textarea>
+        <label>Privacy Policy</label><textarea id="sPolPrivacy" rows="3"></textarea>
+        <label>Terms &amp; Conditions</label><textarea id="sPolTerms" rows="3"></textarea>
+        <label>About &amp; Contact</label><textarea id="sPolAbout" rows="3"></textarea>
+        <button class="btn" style="margin-top:18px" type="submit">সব Settings সেভ করুন</button>
+        <div class="msg" id="siteMsg"></div>
+      </form>
+    </section>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+<script>
+renderChrome("");
+let productsCache = [], bannersCache = [];
+(async () => { try { const s = await api("admin/status"); if (!s.setup) { $("#gateSub").textContent = "প্রথমবার: নিজের Admin Passcode তৈরি করুন (কমপক্ষে 4 অক্ষর) — এটাই পরে Login-এ লাগবে।"; $("#gateBtn").textContent = "Passcode তৈরি করে ঢুকুন"; } } catch (e) {} })();
+if (store.get(ATK)) showDash();
+$("#gateForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const m = $("#gateMsg"); m.className = "msg"; m.textContent = "অপেক্ষা করুন...";
+  try {
+    const s = await api("admin/status");
+    const d = await api(s.setup ? "admin/login" : "admin/setup", { method: "POST", body: JSON.stringify({ passcode: $("#gatePass").value }) });
+    store.set(ATK, d.token); showDash();
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+});
+$("#adminLogout").addEventListener("click", () => { store.del(ATK); location.reload(); });
+const TABS = ["banners", "products", "stock", "orders", "coupons", "users", "settings"];
+document.querySelectorAll(".admin-tabs button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll(".admin-tabs button").forEach((x) => x.classList.remove("on"));
+  b.classList.add("on");
+  TABS.forEach((t) => $("#tab-" + t).style.display = t === b.dataset.tab ? "block" : "none");
+}));
+function showDash() {
+  $("#gatePanel").style.display = "none"; $("#dashPanel").style.display = "block";
+  loadStats(); loadBanners(); loadProductsAdmin(); loadStock(); loadOrdersAdmin(); loadCouponsAdmin(); loadUsersAdmin(); loadSiteForm();
+}
+async function loadStats() {
+  try {
+    const s = await api("admin/stats", { admin: true });
+    $("#stRevenue").textContent = money(s.revenue); $("#stOrders").textContent = s.totalOrders;
+    $("#stPending").textContent = s.pendingOrders; $("#stDelivered").textContent = s.deliveredOrders;
+    $("#stProducts").textContent = s.totalProducts; $("#stUsers").textContent = s.totalUsers;
+    const w = $("#lowStockWarn");
+    if (s.lowStockProducts > 0) { w.className = "msg err"; w.textContent = "⚠️ " + s.lowStockProducts + "টি প্রোডাক্টের ডেলিভারি স্টক কম (২ বা তার কম) — Delivery Stock ট্যাবে নতুন কী/লিংক যোগ করুন।"; }
+    else { w.className = "msg"; w.textContent = ""; }
+  } catch (e) {}
+}
+
+/* ---------- Banners ---------- */
+$("#bnImgFile").addEventListener("change", async () => { const u = await fileToDataUrl($("#bnImgFile"), 1400, 0.8); if (u) { $("#bnImg").value = u; $("#bnPreview").innerHTML = `<img src="${u}" style="max-width:320px;border-radius:12px;border:1px solid var(--line)">`; } });
+async function loadBanners() {
+  try {
+    const d = await api("admin/banners", { admin: true });
+    bannersCache = d.banners || [];
+    $("#bnList").innerHTML = bannersCache.length ? `<table><tr><th>ব্যানার</th><th>অবস্থা</th><th></th></tr>
+      ${bannersCache.map((b) => `<tr><td>${b.image_url ? `<img src="${esc(b.image_url)}" style="width:86px;height:44px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:8px">` : ""}<b>${esc(b.title || "(শিরোনাম নেই)")}</b></td><td>${b.active ? "🟢 চালু" : "🔴 বন্ধ"}</td>
+      <td style="white-space:nowrap"><button class="btn sm ghost" onclick="editBanner(${b.id})">Edit</button> <button class="btn sm danger" onclick="delBanner(${b.id})">Delete</button></td></tr>`).join("")}</table>`
+      : '<div class="empty">এখনো কোনো ব্যানার নেই।</div>';
+  } catch (e) { $("#bnList").innerHTML = '<div class="empty">' + esc(e.message) + "</div>"; }
+}
+function resetBannerForm() { $("#bnForm").reset(); $("#bnId").value = ""; $("#bnPreview").innerHTML = ""; $("#bnActive").checked = true; $("#bnFormTitle").textContent = "নতুন ব্যানার"; $("#bnSaveBtn").textContent = "Save Banner"; $("#bnCancel").style.display = "none"; }
+$("#bnCancel").addEventListener("click", resetBannerForm);
+window.editBanner = (id) => { const b = bannersCache.find((x) => x.id === id); if (!b) return;
+  $("#bnId").value = b.id; $("#bnTitle").value = b.title || ""; $("#bnSub").value = b.subtitle || ""; $("#bnBtn").value = b.button_text || ""; $("#bnLink").value = b.button_link || ""; $("#bnImg").value = b.image_url || ""; $("#bnSort").value = b.sort || 0; $("#bnActive").checked = !!b.active;
+  $("#bnPreview").innerHTML = b.image_url ? `<img src="${esc(b.image_url)}" style="max-width:320px;border-radius:12px;border:1px solid var(--line)">` : "";
+  $("#bnFormTitle").textContent = "ব্যানার Edit"; $("#bnSaveBtn").textContent = "Update Banner"; $("#bnCancel").style.display = "inline-block"; window.scrollTo({ top: 0, behavior: "smooth" }); };
+window.delBanner = async (id) => { if (!confirm("ব্যানারটি মুছবেন?")) return; try { await api("admin/banners/" + id, { admin: true, method: "DELETE" }); loadBanners(); } catch (e) { alert(e.message); } };
+$("#bnForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const m = $("#bnMsg");
+  const payload = { title: $("#bnTitle").value.trim(), subtitle: $("#bnSub").value.trim(), buttonText: $("#bnBtn").value.trim(), buttonLink: $("#bnLink").value.trim(), imageUrl: $("#bnImg").value.trim(), sort: Number($("#bnSort").value) || 0, active: $("#bnActive").checked };
+  try {
+    if ($("#bnId").value) await api("admin/banners/" + $("#bnId").value, { admin: true, method: "PUT", body: JSON.stringify(payload) });
+    else await api("admin/banners", { admin: true, method: "POST", body: JSON.stringify(payload) });
+    m.className = "msg ok"; m.textContent = "✓ ব্যানার সেভ হয়েছে"; resetBannerForm(); loadBanners();
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+});
+
+/* ---------- Products ---------- */
+$("#pImgFile").addEventListener("change", async () => { const u = await fileToDataUrl($("#pImgFile")); if (u) { $("#pImg").value = u; $("#imgPreview").innerHTML = `<img src="${u}" style="max-width:220px;border-radius:12px;border:1px solid var(--line)">`; } });
+function varRow(v) {
+  return `<div class="row2" style="margin-top:8px;align-items:end">
+    <div><label>ভার্সনের নাম</label><input class="vLabel" placeholder="যেমন: ১ মাস" value="${v ? esc(v.label) : ""}"></div>
+    <div><label>দাম (৳)</label><input class="vPrice" type="number" min="1" placeholder="100" value="${v ? v.price : ""}"></div>
+  </div>`;
+}
+$("#addVar").addEventListener("click", () => $("#varRows").insertAdjacentHTML("beforeend", varRow(null)));
+function collectVariants() {
+  const rows = [...document.querySelectorAll("#varRows .row2")];
+  return rows.map((r) => ({ label: r.querySelector(".vLabel").value.trim(), price: Number(r.querySelector(".vPrice").value) })).filter((v) => v.label && v.price);
+}
+function fillForm(p) {
+  $("#pId").value = p.id; $("#pName").value = p.name; $("#pDesc").value = p.description || "";
+  $("#pPrice").value = p.price; $("#pOldPrice").value = p.old_price ?? ""; $("#pCat").value = p.category || ""; $("#pImg").value = p.image_url || ""; $("#pFeatured").checked = !!p.featured;
+  $("#imgPreview").innerHTML = p.image_url ? `<img src="${esc(p.image_url)}" style="max-width:220px;border-radius:12px;border:1px solid var(--line)">` : "";
+  $("#varRows").innerHTML = (p.variants || []).map(varRow).join("");
+  $("#formTitle").textContent = "প্রোডাক্ট Edit"; $("#prodBtn").textContent = "Update Product"; $("#cancelEdit").style.display = "inline-block"; window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function resetForm() { $("#prodForm").reset(); $("#pId").value = ""; $("#imgPreview").innerHTML = ""; $("#varRows").innerHTML = ""; $("#pFeatured").checked = false; $("#formTitle").textContent = "নতুন প্রোডাক্ট"; $("#prodBtn").textContent = "Save Product"; $("#cancelEdit").style.display = "none"; }
+$("#cancelEdit").addEventListener("click", resetForm);
+$("#prodForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const m = $("#prodMsg"); m.className = "msg"; m.textContent = "সেভ হচ্ছে...";
+  const payload = { name: $("#pName").value.trim(), description: $("#pDesc").value.trim(), price: Number($("#pPrice").value), oldPrice: $("#pOldPrice").value ? Number($("#pOldPrice").value) : null, category: $("#pCat").value.trim(), imageUrl: $("#pImg").value.trim(), featured: $("#pFeatured").checked, variants: collectVariants() };
+  try {
+    if ($("#pId").value) await api("products/" + $("#pId").value, { admin: true, method: "PUT", body: JSON.stringify(payload) });
+    else await api("products", { admin: true, method: "POST", body: JSON.stringify(payload) });
+    m.className = "msg ok"; m.textContent = "✓ সেভ হয়েছে"; resetForm(); loadProductsAdmin(); loadStats();
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+});
+async function loadProductsAdmin() {
+  try {
+    const d = await api("products"); productsCache = d.products || [];
+    $("#prodList").innerHTML = productsCache.length ? `<table><tr><th>নাম</th><th>দাম</th><th>স্টক</th><th></th></tr>
+      ${productsCache.map((p) => `<tr><td><b>${esc(p.name)}</b>${p.featured ? " · Featured" : ""}<br><span class="sub">${esc(p.category || "")}${p.variants && p.variants.length ? " · " + p.variants.length + "টি ভার্সন" : ""}</span></td>
+      <td>${money(basePrice(p))}</td><td>${stockTotal(p)}টি</td>
+      <td style="white-space:nowrap"><button class="btn sm ghost" onclick="editProd(${p.id})">Edit</button> <button class="btn sm danger" onclick="delProd(${p.id})">Delete</button></td></tr>`).join("")}</table>`
+      : '<div class="empty">এখনো কোনো প্রোডাক্ট নেই।</div>';
+    $("#skProduct").innerHTML = productsCache.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+    syncVariantSelect();
+  } catch (e) { $("#prodList").innerHTML = '<div class="empty">' + esc(e.message) + "</div>"; }
+}
+window.editProd = (id) => { const p = productsCache.find((x) => x.id === id); if (p) fillForm(p); };
+window.delProd = async (id) => { if (!confirm("প্রোডাক্টটি মুছবেন?")) return; try { await api("products/" + id, { admin: true, method: "DELETE" }); loadProductsAdmin(); loadStats(); } catch (e) { alert(e.message); } };
+
+/* ---------- Stock ---------- */
+function syncVariantSelect() {
+  const p = productsCache.find((x) => x.id === Number($("#skProduct").value));
+  $("#skVariant").innerHTML = '<option value="">সাধারণ (ভার্সন ছাড়া)</option>' + ((p && p.variants) || []).map((v) => `<option value="${v.id}">${esc(v.label)}</option>`).join("");
+}
+$("#skProduct").addEventListener("change", syncVariantSelect);
+$("#stockForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const m = $("#skMsg");
+  try {
+    const d = await api("admin/stock", { admin: true, method: "POST", body: JSON.stringify({ productId: Number($("#skProduct").value), variantId: $("#skVariant").value ? Number($("#skVariant").value) : null, items: $("#skItems").value }) });
+    m.className = "msg ok"; m.textContent = "✓ " + d.added + "টি আইটেম স্টকে যোগ হয়েছে"; $("#skItems").value = ""; loadStock(); loadProductsAdmin(); loadStats();
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+});
+async function loadStock() {
+  try {
+    const d = await api("admin/stock", { admin: true });
+    const items = d.stock || [];
+    const pname = (pid) => { const p = productsCache.find((x) => x.id === pid); return p ? p.name : "#" + pid; };
+    $("#stockList").innerHTML = items.length ? `<table><tr><th>প্রোডাক্ট</th><th>কী/লিংক</th><th>অবস্থা</th><th></th></tr>
+      ${items.slice(0, 100).map((s) => `<tr><td>${esc(pname(s.product_id))}</td><td style="word-break:break-all;max-width:280px">${esc(s.content)}</td><td>${s.status === "available" ? "🟢 ফাঁকা" : "📦 Order #" + (s.order_id || "")}</td>
+      <td>${s.status === "available" ? `<button class="btn sm danger" onclick="delStock(${s.id})">Delete</button>` : ""}</td></tr>`).join("")}</table>`
+      : '<div class="empty">স্টক খালি।</div>';
+  } catch (e) { $("#stockList").innerHTML = '<div class="empty">' + esc(e.message) + "</div>"; }
+}
+window.delStock = async (id) => { try { await api("admin/stock/" + id, { admin: true, method: "DELETE" }); loadStock(); loadProductsAdmin(); } catch (e) { alert(e.message); } };
+
+/* ---------- Orders ---------- */
+async function loadOrdersAdmin() {
+  try {
+    const d = await api("admin/orders", { admin: true });
+    const orders = d.orders || [];
+    $("#orderList").innerHTML = orders.length ? `<table><tr><th># / তারিখ</th><th>প্রোডাক্ট</th><th>কাস্টমার</th><th>পেমেন্ট</th><th>টাকা</th><th>ডেলিভারি</th><th>স্ট্যাটাস</th></tr>
+      ${orders.map((o) => `<tr>
+        <td>#${o.id}<br><span class="sub">${esc((o.created_at || "").slice(0, 10))}</span></td>
+        <td><b>${esc(o.product_name)}</b>${o.variant_label ? `<br><span class="sub">${esc(o.variant_label)}</span>` : ""}${o.coupon_code ? `<br><span class="sub">🎟️ ${esc(o.coupon_code)}</span>` : ""}</td>
+        <td>${esc(o.customer_name)}<br><span class="sub">${esc(o.customer_mobile)}</span></td>
+        <td>${esc(o.payment_method)}<br><span class="sub">${esc(o.payment_number)}<br>TrxID: ${esc(o.trx_id)}</span></td>
+        <td>${money(o.price - (o.discount || 0))}${o.discount ? `<br><s class="sub">${money(o.price)}</s>` : ""}</td>
+        <td>${o.delivery_content ? `<span class="sub" style="word-break:break-all">✅ ${esc(o.delivery_content.slice(0, 40))}${o.delivery_content.length > 40 ? "…" : ""}</span>` : `${o.status !== "Cancelled" ? `<button class="btn sm" onclick="approveSend(${o.id})">Approve &amp; Send Key</button><br>` : ""}<input id="md-${o.id}" placeholder="নিজে লিখুন" style="min-width:130px;margin-top:6px"> <button class="btn sm ghost" onclick="manualDeliver(${o.id})">Save</button>`}</td>
+        <td><select onchange="setStatus(${o.id}, this.value)">${["Pending", "Confirmed", "Delivered", "Cancelled"].map((s) => `<option ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}</select></td></tr>`).join("")}</table>`
+      : '<div class="empty">এখনো কোনো order আসেনি।</div>';
+  } catch (e) { $("#orderList").innerHTML = '<div class="empty">' + esc(e.message) + "</div>"; }
+}
+window.approveSend = async (id) => { try { const d = await api("admin/orders/" + id, { admin: true, method: "PATCH", body: JSON.stringify({ status: "Delivered" }) }); if (!d.delivered) alert("⚠️ অর্ডার Completed হয়েছে, কিন্তু স্টকে কী/লিংক ছিল না — 'নিজে লিখুন' ঘরে কী/লিংক দিয়ে Save করুন, কাস্টমারের Dashboard-এ সাথে সাথে যাবে।"); loadOrdersAdmin(); loadStock(); loadStats(); } catch (e) { alert(e.message); } };
+window.setStatus = async (id, status) => { try { const d = await api("admin/orders/" + id, { admin: true, method: "PATCH", body: JSON.stringify({ status }) }); if ((status === "Confirmed" || status === "Delivered") && !d.delivered) alert("⚠️ স্টকে কী/লিংক ছিল না — অর্ডারটির 'Manual delivery' ঘরে নিজে লিখে দিন, অথবা আগে স্টক যোগ করুন।"); loadOrdersAdmin(); loadStock(); loadStats(); } catch (e) { alert(e.message); } };
+window.manualDeliver = async (id) => { const v = $("#md-" + id).value.trim(); if (!v) { alert("আগে কী/লিংক লিখুন"); return; } try { await api("admin/orders/" + id, { admin: true, method: "PATCH", body: JSON.stringify({ deliveryContent: v }) }); loadOrdersAdmin(); } catch (e) { alert(e.message); } };
+
+/* ---------- Coupons ---------- */
+$("#couponForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const m = $("#cpMsg");
+  try { await api("admin/coupons", { admin: true, method: "POST", body: JSON.stringify({ code: $("#cpCode").value.trim(), discountType: $("#cpType").value, discountValue: Number($("#cpValue").value) }) }); m.className = "msg ok"; m.textContent = "✓ কুপন তৈরি হয়েছে"; $("#couponForm").reset(); loadCouponsAdmin(); }
+  catch (e) { m.className = "msg err"; m.textContent = e.message; }
+});
+async function loadCouponsAdmin() {
+  try {
+    const d = await api("admin/coupons", { admin: true });
+    const cs = d.coupons || [];
+    $("#couponList").innerHTML = cs.length ? `<table><tr><th>কোড</th><th>ছাড়</th><th></th></tr>
+      ${cs.map((c) => `<tr><td><b>${esc(c.code)}</b></td><td>${c.discount_type === "percent" ? c.discount_value + "%" : money(c.discount_value)}</td><td><button class="btn sm danger" onclick="delCoupon(${c.id})">Delete</button></td></tr>`).join("")}</table>`
+      : '<div class="empty">এখনো কোনো কুপন নেই।</div>';
+  } catch (e) { $("#couponList").innerHTML = '<div class="empty">' + esc(e.message) + "</div>"; }
+}
+window.delCoupon = async (id) => { if (!confirm("কুপনটি মুছবেন?")) return; try { await api("admin/coupons/" + id, { admin: true, method: "DELETE" }); loadCouponsAdmin(); } catch (e) { alert(e.message); } };
+
+/* ---------- Users ---------- */
+async function loadUsersAdmin() {
+  try {
+    const d = await api("admin/users", { admin: true });
+    const us = d.users || [];
+    $("#userList").innerHTML = us.length ? `<table><tr><th>কাস্টমার</th><th>মোবাইল</th><th>অর্ডার</th><th>কেনাকাটা</th><th>অবস্থা</th><th></th></tr>
+      ${us.map((u) => `<tr><td><b>${esc(u.name)}</b><br><span class="sub">সদস্য: ${esc((u.created_at || "").slice(0, 10))}</span></td><td>${esc(u.mobile)}</td><td>${u.orders}</td><td>${money(u.spent)}</td>
+      <td>${u.blocked ? "🔴 Blocked" : "🟢 Active"}</td>
+      <td><button class="btn sm ${u.blocked ? "ghost" : "danger"}" onclick="toggleBlock(${u.id}, ${u.blocked ? 0 : 1})">${u.blocked ? "Unblock" : "Block"}</button></td></tr>`).join("")}</table>`
+      : '<div class="empty">এখনো কোনো কাস্টমার নেই।</div>';
+  } catch (e) { $("#userList").innerHTML = '<div class="empty">' + esc(e.message) + "</div>"; }
+}
+window.toggleBlock = async (id, blocked) => { try { await api("admin/users/" + id, { admin: true, method: "PATCH", body: JSON.stringify({ blocked: !!blocked }) }); loadUsersAdmin(); } catch (e) { alert(e.message); } };
+
+/* ---------- Site settings ---------- */
+$("#sLogoFile").addEventListener("change", async () => { const u = await fileToDataUrl($("#sLogoFile"), 600, 0.85); if (u) { $("#sLogoUrl").value = u; $("#logoPreview").innerHTML = `<img src="${u}" style="max-height:56px;border-radius:10px;border:1px solid var(--line);background:#fff2;padding:4px">`; } });
+async function loadSiteForm() {
+  try {
+    const d = await api("settings");
+    const s = d.site || {};
+    const set = (id, v) => { const el = $(id); if (el) el.value = v ?? ""; };
+    set("#sLogoUrl", s.logoUrl); set("#sSiteName", s.siteName); set("#sTagline", s.tagline);
+    $("#sAnnOn").checked = !!s.announcementOn; set("#sAnn", s.announcement);
+    set("#sHeroTitle", s.heroTitle); set("#sHeroSub", s.heroSubtitle);
+    $("#sShowFeatured").checked = s.showFeatured !== false;
+    $("#sMaint").checked = !!s.maintenance; set("#sMaintText", s.maintenanceText);
+    set("#sBkash", s.payBkash); set("#sNagad", s.payNagad); set("#sRocket", s.payRocket); set("#sWhatsapp", s.whatsapp);
+    set("#sPayNote", s.payNote); set("#sDeliveryMsg", s.deliveryMessage);
+    set("#sPolDelivery", s.policyDelivery); set("#sPolRefund", s.policyRefund); set("#sPolPrivacy", s.policyPrivacy); set("#sPolTerms", s.policyTerms); set("#sPolAbout", s.policyAbout);
+    if (s.logoUrl) $("#logoPreview").innerHTML = `<img src="${esc(s.logoUrl)}" style="max-height:56px;border-radius:10px;border:1px solid var(--line)">`;
+  } catch (e) {}
+}
+$("#siteForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const m = $("#siteMsg");
+  const payload = {
+    logoUrl: $("#sLogoUrl").value.trim(), siteName: $("#sSiteName").value.trim(), tagline: $("#sTagline").value.trim(),
+    announcementOn: $("#sAnnOn").checked, announcement: $("#sAnn").value.trim(),
+    heroTitle: $("#sHeroTitle").value.trim(), heroSubtitle: $("#sHeroSub").value.trim(),
+    showFeatured: $("#sShowFeatured").checked, maintenance: $("#sMaint").checked, maintenanceText: $("#sMaintText").value.trim(),
+    payBkash: $("#sBkash").value.trim(), payNagad: $("#sNagad").value.trim(), payRocket: $("#sRocket").value.trim(), whatsapp: $("#sWhatsapp").value.trim(),
+    payNote: $("#sPayNote").value.trim(), deliveryMessage: $("#sDeliveryMsg").value.trim(),
+    policyDelivery: $("#sPolDelivery").value.trim(), policyRefund: $("#sPolRefund").value.trim(), policyPrivacy: $("#sPolPrivacy").value.trim(), policyTerms: $("#sPolTerms").value.trim(), policyAbout: $("#sPolAbout").value.trim(),
+  };
+  try { await api("admin/settings", { admin: true, method: "POST", body: JSON.stringify(payload) }); m.className = "msg ok"; m.textContent = "✓ Settings সেভ হয়েছে — সাইটে গিয়ে দেখুন (পেজ রিফ্রেশ করুন)"; }
+  catch (e) { m.className = "msg err"; m.textContent = e.message; }
+});
+</script>
+</body>
+</html>
